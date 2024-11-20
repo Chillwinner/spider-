@@ -1,0 +1,35 @@
+def baidu():
+    """
+    本函数实现了一个简单的命令行翻译工具，使用百度翻译API进行单词翻译。
+    用户可以连续输入单词进行翻译，直到输入'stop'为止。
+    """
+    while 1:
+        # 实例化UserAgent对象，用于生成随机的用户代理头
+        ua = UserAgent()
+        # 定义百度翻译API的URL
+        url = 'https://fanyi.baidu.com/sug'
+        # 获取用户输入的关键词
+        keywords = input('please enter the word:')
+        # 检查是否输入'stop'，如果是则退出循环
+        if keywords == 'stop':
+            break
+        else:
+            # 构造请求头，包含随机的用户代理
+            header = {
+                'User-Agent': ua.random
+            }
+            # 构造请求参数，包含用户输入的关键词
+            kw = {
+                'kw': keywords
+            }
+            # 发送POST请求到百度翻译API
+            resp = requests.post(url, headers=header, params=kw)
+            # 解析响应内容为JSON格式
+            res = json.loads(resp.content.decode('utf-8'))
+            # 遍历翻译结果并打印
+            for item in res['data']:
+                print(f"k: {item['k']}, v: {item['v']}")
+
+if __name__ == '__main__':
+    # 程序入口点，调用baidu函数
+    baidu()
