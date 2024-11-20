@@ -1,3 +1,16 @@
+import asyncio
+import json
+import time
+import os
+from selenium.webdriver.chrome.service import Service
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+import aiohttp
+from fake_useragent import UserAgent
+import requests
+from lxml import etree
+from selenium.webdriver.chrome.options import Options
+
 class Novel_downloads:
     # 初始化类变量
     id=[]
@@ -100,3 +113,8 @@ class Novel_downloads:
             for i in result1:
                 f.write(i + '\n')
             print('\t'+result[0]+'\nwriting is over!')
+
+if __name__ == '__main__':
+    novel=Novel_downloads()
+    loop=asyncio.get_event_loop()           #这两行是执行异步函数的
+    loop.run_until_complete(novel.main())  #用run会报错
