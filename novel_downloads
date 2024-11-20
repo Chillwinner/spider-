@@ -1,0 +1,102 @@
+class Novel_downloads:
+    # 初始化类变量
+    id=[]
+    ua=UserAgent()
+    name=''
+    headers= {
+        'User-Agent': ua.random
+    }
+    origin_url='https://www.bg60.cc'
+
+    # 定义主方法，用于下载小说
+    async def main(self):
+        # 打印系统信息
+        print('\t\t小说下载系统')
+        # 用户输入想下载的小说名称
+        f=input('请输入你想下载的小说:')
+        # 设置小说名称
+        self.name=f
+        # 构造搜索URL
+        book_name=f'https://www.bg60.cc/s?q={f}'
+        # 使用Selenium获取搜索结果页面
+        result=self.Selenium(book_name)
+        # 如果搜索结果不为空
+        if result!='':
+            # 构造小说详情页URL
+            book_html='https://www.bg60.cc'+result
+            print(book_html)
+            # 获取小说所有章节的URL
+            fina=self.get_url(book_html)
+            # 创建任务列表
+            task = []
+            # 尝试创建存储小说的文件夹
+            try:
+                os.mkdir(f'D:\\小说\\{self.name}')
+            except:
+                print('文件夹已存在')
+            # 为每个章节URL创建下载任务
+            for i in fina:
+                task.append(asyncio.create_task(self.request(i)))
+            # 执行所有下载任务
+            await asyncio.wait(task)
+        else:
+            print('没有找到该小说')
+
+    # 使用Selenium获取网页源码
+    def Selenium(self,url):
+        Chrome_options=Options()
+        Chrome_options.add_argument("--headless")
+        Chrome_options.add_argument("--disable-gpu")
+        # 设置Chrome驱动路径
+        service=Service(r'D:\Chrome\chromedriver-win64\chromedriver.exe')
+        # 初始化WebDriver
+        wd = webdriver.Chrome(service=service,options=Chrome_options)
+        wd.implicitly_wait(10)
+        wd.get(url)
+        time.sleep(2)
+        # 解析页面源码
+        tree=etree.HTML(wd.page_source)
+        # 获取小说详情页URL
+        result=tree.xpath('//div[2]/h4[@class="bookname"]/a/@href')
+        return result[0]
+
+    # 获取小说所有章节的URL
+    def get_url(self,url):
+        # 发送GET请求
+        resp=requests.get(url,headers=self.headers)
+        # 解析页面源码
+        tree=etree.HTML(resp.content.decode('utf-8'))
+        result=tree.xpath('//dd/a/@href')
+        result1=[]
+        # 构造完整的章节URL
+        for i in result:
+            result1.append(self.origin_url+i)
+        return result1
+
+    # 发送请求并下载章节内容
+    async def request(self,url):
+        try :
+            async with aiohttp.ClientSession() as session:
+                await asyncio.sleep(1)
+                async with session.get(url, headers=self.headers) as resp:
+                    content = await resp.text(encoding='utf-8')
+                    # 下载章节内容
+                    self.download(content)
+        except Exception as e:
+            print(e)
+        finally:
+            await session.close()
+
+    # 下载并保存章节内容
+    def download(self,content):
+        tree = etree.HTML(content)
+        # 获取章节标题
+        result = tree.xpath('/html/head/title/text()')
+        # 获取章节正文
+        result1 = tree.xpath('//*[@id="chaptercontent"]/text()')
+        # 保存章节内容到文件
+        with open(f'D:\\小说\\{self.name}\\{result[0]}.txt', 'w', encoding='utf-8') as f:
+            f.write('\t\t\t\t\t'+result[0] + '\n')
+            for i in result1:
+                f.write(i + '\n')
+            print('\t'+result[0]+'\nwriting is over!')
